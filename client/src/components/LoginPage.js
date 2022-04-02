@@ -10,7 +10,7 @@ class LoginPage extends React.Component {
     }
 
     componentDidMount() {
-
+      
     }
 
     onFinish = () => {
@@ -57,6 +57,16 @@ class LoginPage extends React.Component {
         this.setState({
             loading : false
         })
+    }
+
+    handleClickGuestMode = () => {
+      this.setState({
+        loading : true
+      })
+      this.props.handleGuestMode()
+      this.setState({
+        loading : false
+      })
     }
 
     render() {
@@ -109,6 +119,14 @@ class LoginPage extends React.Component {
                   type="primary"
                 >
                   Register
+                </Button>
+                <Button
+                  onClick={this.handleClickGuestMode}
+                  disabled={this.state.loading}
+                  shape="round"
+                  type="primary"
+                >
+                  Guest Mode
                 </Button>
               </Space>
             </div>
