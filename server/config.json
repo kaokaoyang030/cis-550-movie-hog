@@ -1,0 +1,9 @@
+{
+    "rds_host": "cis550project.cknfcl4yexrb.us-east-1.rds.amazonaws.com",
+    "rds_port": "3306",
+    "rds_user": "admin",
+    "rds_password" : "MovieHog",
+    "rds_db": "movies",
+    "server_host": "127.0.0.1",
+    "server_port":"3000"
+}
