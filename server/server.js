@@ -22,6 +22,26 @@ app.post("/like", routes.like);
 
 app.post("/unlike", routes.unlike);
 
+app.get("/likes", routes.likes);
+
 app.get("/favorites", routes.favorites);
+
+app.get("/users", routes.users);
+
+app.get("/resilient", routes.resilient);
+
+app.get("/versatile", routes.versatile);
+
+app.get("/top_rating", routes.top_rating);
+
+app.get("/top_review", routes.top_review);
+
+app.get("/random_genre", routes.random_genre);
+
+app.get("/co_actors", routes.co_actors);
+
+app.get("/connections", routes.connections);
+
+app.get("/actors", routes.actors);
 
 app.listen(3000, () => console.log("Listening on port 3000..."));
