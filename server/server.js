@@ -52,4 +52,6 @@ app.get("/get_genres_by_ID", routes.get_genres_by_ID);
 
 app.get("/get_avg_ratings_by_ID", routes.get_avg_ratings_by_ID);
 
+app.get("/get_movie_info_by_ID", routes.get_movie_info_by_ID);
+
 app.listen(3000, () => console.log("Listening on port 3000..."));

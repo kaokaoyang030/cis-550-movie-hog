@@ -539,7 +539,7 @@ async function get_casts_by_ID(req, res) {
   }); 
 }
 
-// Getting the corresponding movie cast by IMDB ID
+// Getting the corresponding genre by IMDB ID
 async function get_genres_by_ID(req, res) {
    var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
    var sql = `SELECT genre FROM genres_db
@@ -555,7 +555,7 @@ async function get_genres_by_ID(req, res) {
   }); 
 }
 
-// Get the ratings by ID
+// Get the average ratings by ID
 async function get_avg_ratings_by_ID(req, res) {
    var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
    var sql = `SELECT AVG(rating) FROM ratings_db
@@ -571,6 +571,20 @@ async function get_avg_ratings_by_ID(req, res) {
   }); 
 }
 
+// get other movie info to show except casts, genres, avg_ratings
+async function get_movie_info_by_ID(req, res) {
+   var ID = req.query.imdbid; //? req.query.genre : "tt0113101";
+   var sql = `SELECT meta_db.title as name, meta_db.director as director, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid FROM meta_db
+   WHERE meta_db.imdb_id = "${ID}";`
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+          console.log(error)
+          res.json({ error: error })
+      } else if (results) {
+          res.json({ results: results })
+      }
+  }); 
+}
 
 
 module.exports = {
@@ -593,5 +607,6 @@ module.exports = {
    //search_movies,
    get_casts_by_ID,
    get_genres_by_ID, 
-   get_avg_ratings_by_ID
+   get_avg_ratings_by_ID, 
+   get_movie_info_by_ID
 };
