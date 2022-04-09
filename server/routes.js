@@ -469,6 +469,110 @@ async function connections(req, res) {
    });
 }
 
+// film searching and showing part
+// Target: search can be filtered by name, genres, actors, director, country, rel yr, rating
+// return: imdb id
+// Can use imdb id to get full list to show: name, director, actor, genres, homepage link (prob handled by frontend), country, org lang, rel date, runtime, imdb id, rating - to show on the display page
+
+/* Need more polish so I hide it now
+async function search_movies(req, res) {
+   var searchQuery = 
+   `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
+   from meta_db
+   join cast_db on meta_db.movie_id = cast_db.movie_id
+   join genres_db on meta_db.movie_id = genres_db.movie_id
+   where`;
+   var nameCond = req.query.moviename ? " meta_db.title like '" + req.query.moviename + "'" : " meta_db.title like 'Heat'" // for testing
+   var genreCond = req.query.genre ? " AND genres_db.genre like '" + req.query.genre + "'" : ""
+   var actorCond = req.query.actor ? " AND cast_db.cast_name like '" + req.query.actor + "'" : ""
+   var countryCond = req.query.country ? " AND meta_db.country like '" + req.query.country + "'" : ""
+   var yearCond = req.query.year ? " AND YEAR(meta_db.release_date) = " + req.query.year + "'" : ""
+   var endquery = " ORDER BY meta_db.title; "
+   var query = searchQuery + nameCond + genreCond + actorCond + countryCond + yearCond + endquery;
+   connection.query(query, function (error, results, fields) {
+       if (error) {
+           console.log(error)
+           res.json({ error: error })
+       } else if (results) {
+           res.json({ results })
+       }
+   }); 
+}
+
+// this currently only returns the imdb id of the movie. Will polish later
+async function rating_filter(req, res) {
+   var searchQuery = 
+   `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
+   from meta_db
+   join cast_db on meta_db.movie_id = cast_db.movie_id
+   join genres_db on meta_db.movie_id = genres_db.movie_id
+   join ratings_db on meta_db.movie_id = ratings_db.movie_id
+   where`;
+   var ratinglowCond = req.query.ratinglow ? " AND ratings_db.rating >= " + req.query.ratinglow : ""
+   var ratinghighCond = req.query.ratinghigh ? " AND ratings_db.rating <= " + req.query.ratinghigh : ""
+   var endquery = " ORDER BY meta_db.title; "
+   var query = searchQuery + ratinglowCond + ratinghighCond + endquery;
+   connection.query(query, function (error, results, fields) {
+       if (error) {
+           console.log(error)
+           res.json({ error: error })
+       } else if (results) {
+           res.json({ results: results })
+       }
+   }); 
+}
+*/
+
+// Getting the corresponding movie cast by IMDB ID
+async function get_casts_by_ID(req, res) {
+   var ID = req.query.imdbid; //? req.query.imdbid : "tt0094675";
+   var sql = `SELECT cast_name FROM cast_db
+   JOIN meta_db on cast_db.movie_id = meta_db.movie_id
+   WHERE meta_db.imdb_id = "${ID}";`
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+          console.log(error)
+          res.json({ error: error })
+      } else if (results) {
+          res.json({ results: results })
+      }
+  }); 
+}
+
+// Getting the corresponding movie cast by IMDB ID
+async function get_genres_by_ID(req, res) {
+   var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
+   var sql = `SELECT genre FROM genres_db
+   JOIN meta_db on genres_db.movie_id = meta_db.movie_id
+   WHERE meta_db.imdb_id = "${ID}";`
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+          console.log(error)
+          res.json({ error: error })
+      } else if (results) {
+          res.json({ results: results })
+      }
+  }); 
+}
+
+// Get the ratings by ID
+async function get_avg_ratings_by_ID(req, res) {
+   var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
+   var sql = `SELECT AVG(rating) FROM ratings_db
+   JOIN meta_db on ratings_db.movie_id = meta_db.movie_id
+   WHERE meta_db.imdb_id = "${ID}";`
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+          console.log(error)
+          res.json({ error: error })
+      } else if (results) {
+          res.json({ results: results })
+      }
+  }); 
+}
+
+
+
 module.exports = {
    hello,
    sign_up,
@@ -486,4 +590,8 @@ module.exports = {
    co_actors,
    connections,
    actors,
+   //search_movies,
+   get_casts_by_ID,
+   get_genres_by_ID, 
+   get_avg_ratings_by_ID
 };

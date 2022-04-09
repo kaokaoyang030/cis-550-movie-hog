@@ -44,4 +44,12 @@ app.get("/connections", routes.connections);
 
 app.get("/actors", routes.actors);
 
+//app.get("/search_movies", routes.search_movies);
+
+app.get("/get_casts_by_ID", routes.get_casts_by_ID);
+
+app.get("/get_genres_by_ID", routes.get_genres_by_ID);
+
+app.get("/get_avg_ratings_by_ID", routes.get_avg_ratings_by_ID);
+
 app.listen(3000, () => console.log("Listening on port 3000..."));
