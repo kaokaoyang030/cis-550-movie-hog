@@ -1,7 +1,7 @@
 var mysql = require("mysql");
 const config = require("./config.json");
 
-//  connection details in config file
+//  connection details
 const connection = mysql.createConnection({
    host: config.rds_host,
    user: config.rds_user,
@@ -15,8 +15,8 @@ connection.connect(function (err) {
    console.log("Connected!");
 });
 
-// a GET request to /hello?name=Steve
 async function hello(req, res) {
+   // a GET request to /hello?name=Steve
    if (req.query.name) {
       res.send(`Hello, ${req.query.name}! Welcome to the Movies server!`);
    } else {
@@ -52,8 +52,11 @@ async function sign_up(req, res) {
 }
 
 async function sign_in(req, res) {
+   console.log('body details: ', req.body)
    const username = req.body.username;
    const password = req.body.password;
+   console.log('111', username)
+   console.log('222', password)
    if (!username || !password) {
       res.send("Enter username and password!");
       res.end();
@@ -71,10 +74,10 @@ async function sign_in(req, res) {
       } else {
          const creds = JSON.parse(JSON.stringify(results));
          if (creds.length == 1) {
-            req.session.username = username;
-            req.session.loggedin = true;
+            // req.session.username = username;
+            // req.session.loggedin = true;
             console.log(`Logged in as ${username}!`);
-            res.json({ valid: true });
+            res.json({ cred: creds });
          } else {
             console.log(`Wrong logging details!`);
             res.json({ valid: false });
@@ -85,7 +88,10 @@ async function sign_in(req, res) {
 
 async function favorites(req, res) {
    const username = req.body.username;
-   let where_clause = username ? `where username = '${username}'` : "";
+   let where_clause = "";
+   if (username) {
+      where_clause = `where username = '${username}'`;
+   }
    let sql = `
    Select *
    from Favorites
@@ -474,7 +480,7 @@ async function connections(req, res) {
 // return: imdb id
 // Can use imdb id to get full list to show: name, director, actor, genres, homepage link (prob handled by frontend), country, org lang, rel date, runtime, imdb id, rating - to show on the display page
 
-/* Need more polish so I hide it now
+// Need more polish so I hide it now
 async function search_movies(req, res) {
    var searchQuery = 
    `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
@@ -521,7 +527,7 @@ async function rating_filter(req, res) {
        }
    }); 
 }
-*/
+
 
 // Getting the corresponding movie cast by IMDB ID
 async function get_casts_by_ID(req, res) {
@@ -604,7 +610,7 @@ module.exports = {
    co_actors,
    connections,
    actors,
-   //search_movies,
+   search_movies,
    get_casts_by_ID,
    get_genres_by_ID, 
    get_avg_ratings_by_ID, 

@@ -8,7 +8,7 @@ var session = require("express-session");
 app.use(session({ secret: "shh" }));
 
 // whitelist localhost 3000
-app.use(cors({ credentials: true, origin: ["http://localhost:3000"] }));
+app.use(cors({ credentials: true, origin: ["http://localhost:3001"] }));
 
 // Route 1
 app.get("/hello", routes.hello);
@@ -21,8 +21,6 @@ app.post("/sign_in", routes.sign_in);
 app.post("/like", routes.like);
 
 app.post("/unlike", routes.unlike);
-
-app.get("/likes", routes.likes);
 
 app.get("/favorites", routes.favorites);
 
@@ -44,7 +42,7 @@ app.get("/connections", routes.connections);
 
 app.get("/actors", routes.actors);
 
-//app.get("/search_movies", routes.search_movies);
+app.get("/search_movies", routes.search_movies);
 
 app.get("/get_casts_by_ID", routes.get_casts_by_ID);
 
