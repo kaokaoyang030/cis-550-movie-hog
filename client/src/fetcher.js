@@ -1,12 +1,6 @@
 import config from './config.json'
 
 const domain = "http://localhost:3000"
-const getAllMatches = async (page, pagesize, league) => {
-    var res = await fetch(`http://${config.server_host}:${config.server_port}/matches/${league}?page=${page}&pagesize=${pagesize}`, {
-        method: 'GET',
-    })
-    return res.json()
-}
 
 const login = async (username, password) => {
     var res = await fetch(`http://${config.server_host}:${config.server_port}/sign_in?username=${username}&password=${password}`, {
