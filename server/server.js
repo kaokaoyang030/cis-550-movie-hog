@@ -18,11 +18,13 @@ app.post("/sign_up", routes.sign_up);
 
 app.post("/sign_in", routes.sign_in);
 
+app.get("/favorites", routes.favorites);
+
 app.post("/like", routes.like);
 
 app.post("/unlike", routes.unlike);
 
-app.get("/favorites", routes.favorites);
+app.get("/likes", routes.likes);
 
 app.get("/users", routes.users);
 
@@ -36,11 +38,11 @@ app.get("/top_review", routes.top_review);
 
 app.get("/random_genre", routes.random_genre);
 
+app.get("/actors", routes.actors);
+
 app.get("/co_actors", routes.co_actors);
 
 app.get("/connections", routes.connections);
-
-app.get("/actors", routes.actors);
 
 app.get("/search_movies", routes.search_movies);
 
