@@ -1,7 +1,7 @@
 var mysql = require("mysql");
 const config = require("./config.json");
 
-//  connection details
+// connection details
 const connection = mysql.createConnection({
    host: config.rds_host,
    user: config.rds_user,
@@ -15,6 +15,7 @@ connection.connect(function (err) {
    console.log("Connected!");
 });
 
+/* dummy route */
 async function hello(req, res) {
    // a GET request to /hello?name=Steve
    if (req.query.name) {
@@ -24,7 +25,12 @@ async function hello(req, res) {
    }
 }
 
-//return cred + obj boolean
+/*
+Purpose: allows users to sign up and create credentials to sign in 
+Type: POST
+Arguments: body.username, body.password 
+Return: username if successful, otherwise null
+*/
 async function sign_up(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -41,18 +47,23 @@ async function sign_up(req, res) {
          if (error.errno == 1062) {
             //duplicate username
             console.log(`Username already in use!`);
-            res.json({ valid: false });
+            res.json({ username: username });
          } else {
             console.log(error);
             res.json({ error: error });
          }
       } else {
-         res.json({ valid: true });
+         res.json({ username: null });
       }
    });
 }
 
-//return cred + obj boolean
+/*
+Purpose: checks credentials provided by user to sign in against database to allow access 
+Type: POST
+Arguments: body.username, body.password 
+Return: username if successful, otherwise null
+*/
 async function sign_in(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -76,10 +87,10 @@ async function sign_in(req, res) {
             req.session.username = username;
             req.session.loggedin = true;
             console.log(`Logged in as ${username}!`);
-            res.json({ cred: creds });
+            res.json({ username: username });
          } else {
             console.log(`Wrong logging details!`);
-            res.json({ valid: false });
+            res.json({ username: null });
          }
       }
    });
@@ -481,67 +492,85 @@ async function connections(req, res) {
 
 // Need more polish so I hide it now
 async function search_movies(req, res) {
-   var searchQuery = 
-   `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
+   var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
    from meta_db
    join cast_db on meta_db.movie_id = cast_db.movie_id
    join genres_db on meta_db.movie_id = genres_db.movie_id
    where`;
-   var nameCond = req.query.moviename ? " meta_db.title like '" + req.query.moviename + "'" : " meta_db.title like 'Heat'" // for testing
-   var genreCond = req.query.genre ? " AND genres_db.genre like '" + req.query.genre + "'" : ""
-   var actorCond = req.query.actor ? " AND cast_db.cast_name like '" + req.query.actor + "'" : ""
-   var countryCond = req.query.country ? " AND meta_db.country like '" + req.query.country + "'" : ""
-   var yearCond = req.query.year ? " AND YEAR(meta_db.release_date) = " + req.query.year + "'" : ""
-   var endquery = " ORDER BY meta_db.title; "
-   var query = searchQuery + nameCond + genreCond + actorCond + countryCond + yearCond + endquery;
+   var nameCond = req.query.moviename
+      ? " meta_db.title like '" + req.query.moviename + "'"
+      : " meta_db.title like 'Heat'"; // for testing
+   var genreCond = req.query.genre
+      ? " AND genres_db.genre like '" + req.query.genre + "'"
+      : "";
+   var actorCond = req.query.actor
+      ? " AND cast_db.cast_name like '" + req.query.actor + "'"
+      : "";
+   var countryCond = req.query.country
+      ? " AND meta_db.country like '" + req.query.country + "'"
+      : "";
+   var yearCond = req.query.year
+      ? " AND YEAR(meta_db.release_date) = " + req.query.year + "'"
+      : "";
+   var endquery = " ORDER BY meta_db.title; ";
+   var query =
+      searchQuery +
+      nameCond +
+      genreCond +
+      actorCond +
+      countryCond +
+      yearCond +
+      endquery;
    connection.query(query, function (error, results, fields) {
-       if (error) {
-           console.log(error)
-           res.json({ error: error })
-       } else if (results) {
-           res.json({ results })
-       }
-   }); 
+      if (error) {
+         console.log(error);
+         res.json({ error: error });
+      } else if (results) {
+         res.json({ results });
+      }
+   });
 }
 
 // this currently only returns the imdb id of the movie. Will polish later
 async function rating_filter(req, res) {
-   var searchQuery = 
-   `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
+   var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
    from meta_db
    join cast_db on meta_db.movie_id = cast_db.movie_id
    join genres_db on meta_db.movie_id = genres_db.movie_id
    join ratings_db on meta_db.movie_id = ratings_db.movie_id
    where`;
-   var ratinglowCond = req.query.ratinglow ? " AND ratings_db.rating >= " + req.query.ratinglow : ""
-   var ratinghighCond = req.query.ratinghigh ? " AND ratings_db.rating <= " + req.query.ratinghigh : ""
-   var endquery = " ORDER BY meta_db.title; "
+   var ratinglowCond = req.query.ratinglow
+      ? " AND ratings_db.rating >= " + req.query.ratinglow
+      : "";
+   var ratinghighCond = req.query.ratinghigh
+      ? " AND ratings_db.rating <= " + req.query.ratinghigh
+      : "";
+   var endquery = " ORDER BY meta_db.title; ";
    var query = searchQuery + ratinglowCond + ratinghighCond + endquery;
    connection.query(query, function (error, results, fields) {
-       if (error) {
-           console.log(error)
-           res.json({ error: error })
-       } else if (results) {
-           res.json({ results: results })
-       }
-   }); 
+      if (error) {
+         console.log(error);
+         res.json({ error: error });
+      } else if (results) {
+         res.json({ results: results });
+      }
+   });
 }
-
 
 // Getting the corresponding movie cast by IMDB ID
 async function get_casts_by_ID(req, res) {
    var ID = req.query.imdbid; //? req.query.imdbid : "tt0094675";
    var sql = `SELECT cast_name FROM cast_db
    JOIN meta_db on cast_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`
+   WHERE meta_db.imdb_id = "${ID}";`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
-          console.log(error)
-          res.json({ error: error })
+         console.log(error);
+         res.json({ error: error });
       } else if (results) {
-          res.json({ results: results })
+         res.json({ results: results });
       }
-  }); 
+   });
 }
 
 // Getting the corresponding genre by IMDB ID
@@ -549,15 +578,15 @@ async function get_genres_by_ID(req, res) {
    var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
    var sql = `SELECT genre FROM genres_db
    JOIN meta_db on genres_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`
+   WHERE meta_db.imdb_id = "${ID}";`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
-          console.log(error)
-          res.json({ error: error })
+         console.log(error);
+         res.json({ error: error });
       } else if (results) {
-          res.json({ results: results })
+         res.json({ results: results });
       }
-  }); 
+   });
 }
 
 // Get the average ratings by ID
@@ -565,32 +594,31 @@ async function get_avg_ratings_by_ID(req, res) {
    var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
    var sql = `SELECT AVG(rating) FROM ratings_db
    JOIN meta_db on ratings_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`
+   WHERE meta_db.imdb_id = "${ID}";`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
-          console.log(error)
-          res.json({ error: error })
+         console.log(error);
+         res.json({ error: error });
       } else if (results) {
-          res.json({ results: results })
+         res.json({ results: results });
       }
-  }); 
+   });
 }
 
 // get other movie info to show except casts, genres, avg_ratings
 async function get_movie_info_by_ID(req, res) {
    var ID = req.query.imdbid; //? req.query.genre : "tt0113101";
    var sql = `SELECT meta_db.title as name, meta_db.director as director, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid FROM meta_db
-   WHERE meta_db.imdb_id = "${ID}";`
+   WHERE meta_db.imdb_id = "${ID}";`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
-          console.log(error)
-          res.json({ error: error })
+         console.log(error);
+         res.json({ error: error });
       } else if (results) {
-          res.json({ results: results })
+         res.json({ results: results });
       }
-  }); 
+   });
 }
-
 
 module.exports = {
    hello,
@@ -611,7 +639,7 @@ module.exports = {
    actors,
    search_movies,
    get_casts_by_ID,
-   get_genres_by_ID, 
-   get_avg_ratings_by_ID, 
-   get_movie_info_by_ID
+   get_genres_by_ID,
+   get_avg_ratings_by_ID,
+   get_movie_info_by_ID,
 };
