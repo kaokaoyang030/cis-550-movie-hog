@@ -96,8 +96,14 @@ async function sign_in(req, res) {
    });
 }
 
+/* 
+Purpose: displays movies liked by a specific user all all users 
+Type: GET
+Arguments: (optional) query.username
+Return: list of {username, movie_id} liked by username
+*/
 async function favorites(req, res) {
-   const username = req.body.username;
+   const username = req.query.username;
    let where_clause = "";
    if (username) {
       where_clause = `where username = '${username}'`;
@@ -117,6 +123,12 @@ async function favorites(req, res) {
    });
 }
 
+/* 
+Purpose: adds movie_id to list of favorites for username
+Type: POST
+Arguments: body.username, body.movie_id
+Return: {username, movie_id} if succesful, otherwise {null, null}
+*/
 async function like(req, res) {
    const username = req.body.username;
    const movie_id = parseInt(req.body.movie_id);
@@ -129,20 +141,27 @@ async function like(req, res) {
          if (error.errno == 1062) {
             //duplicate username
             console.log(`Movie already liked!`);
-            res.json({ valid: false });
+            res.json({ username: null, movie_id: null });
          } else if (error.errno == 1452) {
+            //not found
             console.log("Movie id or username doesnt exist!");
-            res.json({ valid: false });
+            res.json({ username: null, movie_id: null });
          } else {
             console.log(error);
             res.json({ error: error });
          }
       } else {
-         res.json({ valid: true });
+         res.json({ username: username, movie_id: movie_id });
       }
    });
 }
 
+/* 
+Purpose: removes movie_id from list of favorites for username
+Type: POST
+Arguments: body.username, body.movie_id
+Return: {username, movie_id} if succesful, otherwise {null, null}
+*/
 async function unlike(req, res) {
    const username = req.body.username;
    const movie_id = parseInt(req.body.movie_id);
@@ -156,13 +175,13 @@ async function unlike(req, res) {
          console.log(error.errno);
          if (error.errno == 1452) {
             console.log("Movie id or username doesnt exist!");
-            res.json({ valid: false });
+            res.json({ username: null, movie_id: null });
          } else {
             console.log(error);
             res.json({ error: error });
          }
       } else {
-         res.json({ valid: true });
+         res.json({ username: username, movie_id: movie_id });
       }
    });
 }
