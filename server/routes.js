@@ -617,6 +617,91 @@ async function connections(req, res) {
    });
 }
 
+/* 
+Purpose: displays movies that respect the filters 
+Type: GET
+Arguments: 
+Return: list of {movie_ids} 
+*/
+async function search(req, res) {
+   const page_size = req.query.page_size;
+   const offset = req.query.offset;
+   let limit_clause = page_size ? `LIMIT ${page_size}` : "";
+   let offset_clause = offset ? `OFFSET ${offset}` : "";
+   const movie_id = req.query.movie_id;
+   const title = req.query.title;
+   const country = req.query.country;
+   const director = req.query.director;
+   const year = req.query.year;
+   let where_clause = "WHERE 1=1 "; //dummy
+   if (movie_id) where_clause = `${where_clause} AND m.movie_id = ${movie_id} `;
+   if (title) where_clause = `${where_clause} AND m.title LIKE '%${title}%' `;
+   if (director)
+      where_clause = `${where_clause} AND m.Director LIKE '%${director}%' `;
+   if (country)
+      where_clause = `${where_clause} AND m.Country LIKE '%${country}%' `;
+   if (year)
+      where_clause = `${where_clause} AND m.release_date LIKE '%${year}%' `;
+   const actor = req.query.actor;
+   const genre = req.query.genre;
+   let with_clause = "";
+   if (actor && !genre) {
+      with_clause = `WITH 
+      movies_with_actor AS (
+         select movie_id 
+         from cast_db 
+         where cast_name like '%${actor}%'
+      ) `;
+      where_clause =
+         where_clause +
+         ` AND movie_id IN (select movie_id from movies_with_actor) `;
+   }
+   if (!actor && genre) {
+      with_clause = `WITH 
+      movies_with_genre AS (
+         select movie_id 
+         from genres_db 
+         where genre like '%${genre}%'
+      ) `;
+      where_clause =
+         where_clause +
+         ` AND movie_id IN (select movie_id from movies_with_genre) `;
+   }
+   if (actor && genre) {
+      with_clause = `WITH 
+      movies_with_actor AS (
+         select movie_id 
+         from cast_db 
+         where cast_name like '%${actor}%'), 
+      movies_with_genre AS (
+         select movie_id 
+         from genres_db 
+         where genre like '%${genre}%'
+      ) `;
+      where_clause =
+         where_clause +
+         ` AND movie_id IN (select movie_id from movies_with_actor) ` +
+         ` AND movie_id IN (select movie_id from movies_with_genre) `;
+   }
+   let sql = `
+      ${with_clause}
+      select movie_id
+      from meta_db m
+      ${where_clause}
+      ${limit_clause}
+      ${offset_clause}
+      ;`;
+   console.log(sql);
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+         console.log(error.errno);
+         res.json({ error: error });
+      } else {
+         res.json({ results });
+      }
+   });
+}
+
 // film searching and showing part
 // Target: search can be filtered by name, genres, actors, director, country, rel yr, rating
 // return: imdb id
@@ -769,6 +854,7 @@ module.exports = {
    co_actors,
    connections,
    actors,
+   search,
    search_movies,
    get_casts_by_ID,
    get_genres_by_ID,

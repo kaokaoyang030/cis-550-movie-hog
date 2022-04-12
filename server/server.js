@@ -44,6 +44,8 @@ app.get("/co_actors", routes.co_actors);
 
 app.get("/connections", routes.connections);
 
+app.get("/search", routes.search);
+
 app.get("/search_movies", routes.search_movies);
 
 app.get("/get_casts_by_ID", routes.get_casts_by_ID);
