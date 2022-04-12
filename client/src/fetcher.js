@@ -1,6 +1,6 @@
 import config from './config.json'
 
-const domain = "http://localhost:3000"
+const domain = "http://localhost:8080"
 
 const login = async (username, password) => {
     var res = await fetch(`http://${config.server_host}:${config.server_port}/sign_in?username=${username}&password=${password}`, {
