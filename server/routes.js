@@ -1,7 +1,11 @@
 var mysql = require("mysql");
 const config = require("./config.json");
 
+<<<<<<< HEAD
+//  connection details
+=======
 // connection details
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 const connection = mysql.createConnection({
    host: config.rds_host,
    user: config.rds_user,
@@ -15,7 +19,10 @@ connection.connect(function (err) {
    console.log("Connected!");
 });
 
+<<<<<<< HEAD
+=======
 /* dummy route */
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 async function hello(req, res) {
    // a GET request to /hello?name=Steve
    if (req.query.name) {
@@ -25,12 +32,16 @@ async function hello(req, res) {
    }
 }
 
+<<<<<<< HEAD
+//return cred + obj boolean
+=======
 /*
 Purpose: allows users to sign up and create credentials to sign in 
 Type: POST
 Arguments: body.username, body.password 
 Return: {username} if successful, otherwise null
 */
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 async function sign_up(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -58,12 +69,16 @@ async function sign_up(req, res) {
    });
 }
 
+<<<<<<< HEAD
+//return cred + obj boolean
+=======
 /*
 Purpose: checks credentials provided by user to sign in against database to allow access 
 Type: POST
 Arguments: body.username, body.password 
 Return: {username} if successful, otherwise {null}
 */
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 async function sign_in(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -87,7 +102,11 @@ async function sign_in(req, res) {
             req.session.username = username;
             req.session.loggedin = true;
             console.log(`Logged in as ${username}!`);
+<<<<<<< HEAD
+            res.json({ cred: creds });
+=======
             res.json({ username: username });
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
          } else {
             console.log(`Wrong logging details!`);
             res.json({ username: null });
@@ -103,11 +122,15 @@ Arguments: (optional) query.username
 Return: list of {username, movie_id} liked by username
 */
 async function favorites(req, res) {
+<<<<<<< HEAD
+   const username = req.body.username;
+=======
    const page_size = req.query.page_size;
    const offset = req.query.offset;
    let limit_clause = page_size ? `LIMIT ${page_size}` : "";
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    const username = req.query.username;
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
    let where_clause = "";
    if (username) {
       where_clause = `where username = '${username}'`;
@@ -389,6 +412,19 @@ async function top_review(req, res) {
    let limit_clause = page_size ? `LIMIT ${page_size}` : "";
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    let sql = `
+<<<<<<< HEAD
+   WITH rating AS(
+      SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
+      FROM ratings_db
+      GROUP BY movie_id
+  )
+  SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS year, runtime, RatingCounts
+  FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
+  WHERE rd.RatingCounts > 50
+  ORDER BY RatingCounts DESC
+  ${limit_clause};
+   `;
+=======
       WITH rating AS(
             SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
             FROM ratings_db
@@ -401,6 +437,7 @@ async function top_review(req, res) {
       ${limit_clause}
       ${offset_clause};
       `;
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -773,6 +810,10 @@ async function rating_filter(req, res) {
       }
    });
 }
+<<<<<<< HEAD
+
+=======
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 
 // Getting the corresponding movie cast by IMDB ID
 async function get_casts_by_ID(req, res) {
@@ -854,7 +895,10 @@ module.exports = {
    co_actors,
    connections,
    actors,
+<<<<<<< HEAD
+=======
    search,
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
    search_movies,
    get_casts_by_ID,
    get_genres_by_ID,

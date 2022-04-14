@@ -31,7 +31,8 @@ const topTenReviewColumns = [
 
 class TopTenReview extends React.Component {
     state = {
-        data: []
+        data: [],
+        comment:  ''
     }
 
     componentDidMount() {
