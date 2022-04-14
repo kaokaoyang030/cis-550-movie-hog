@@ -35,6 +35,7 @@ const getSearchMovies = async (keyword, genre, actor, country, year) => {
     })
 }
 
+<<<<<<< HEAD
 const getTopReviewMovies = async (limit) => {
     const url = `${domain}/top_review?max=${limit}`
     return fetch(url, {
@@ -47,6 +48,9 @@ const getTopReviewMovies = async (limit) => {
         return response.json()
     })
 }
+=======
+
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 
 
 
@@ -62,7 +66,12 @@ const getTopReviewMovies = async (limit) => {
 
 export {
     getTopRatingMovies,
+<<<<<<< HEAD
     getSearchMovies,
     login,
     getTopReviewMovies
 }
+=======
+    getSearchMovies
+}
+>>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
