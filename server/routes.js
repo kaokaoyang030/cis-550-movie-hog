@@ -24,6 +24,7 @@ async function hello(req, res) {
    }
 }
 
+//return cred + obj boolean
 async function sign_up(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -51,12 +52,10 @@ async function sign_up(req, res) {
    });
 }
 
+//return cred + obj boolean
 async function sign_in(req, res) {
-   console.log('body details: ', req.body)
    const username = req.body.username;
    const password = req.body.password;
-   console.log('111', username)
-   console.log('222', password)
    if (!username || !password) {
       res.send("Enter username and password!");
       res.end();
@@ -74,8 +73,8 @@ async function sign_in(req, res) {
       } else {
          const creds = JSON.parse(JSON.stringify(results));
          if (creds.length == 1) {
-            // req.session.username = username;
-            // req.session.loggedin = true;
+            req.session.username = username;
+            req.session.loggedin = true;
             console.log(`Logged in as ${username}!`);
             res.json({ cred: creds });
          } else {
@@ -294,10 +293,10 @@ async function top_review(req, res) {
       FROM ratings_db
       GROUP BY movie_id
   )
-  SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS year, runtime, rd.rating
+  SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS year, runtime, RatingCounts
   FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
   WHERE rd.RatingCounts > 50
-  ORDER BY rd.rating DESC
+  ORDER BY RatingCounts DESC
   ${limit_clause};
    `;
    connection.query(sql, function (error, results, fields) {
