@@ -370,12 +370,18 @@ async function top_rating(req, res) {
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    let sql = `
       WITH rating AS(
-            SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
+            SELECT movie_id, 
+               ROUND(AVG(rating),1) as RATING, 
+               COUNT(*) AS RatingCounts
             FROM ratings_db
             GROUP BY movie_id
       )
-      SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS YEAR, runtime,rd.rating
-      FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
+      SELECT meta_db.movie_id, 
+         TITLE, 
+         YEAR(release_date) AS YEAR, 
+         runtime,rd.rating
+      FROM meta_db 
+         JOIN rating rd on meta_db.movie_id = rd.movie_id
       WHERE rd.RatingCounts > 50
       ORDER BY rd.rating DESC
       ${limit_clause}
@@ -404,12 +410,19 @@ async function top_review(req, res) {
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    let sql = `
    WITH rating AS(
-         SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
+         SELECT movie_id, 
+            ROUND(AVG(rating),1) as RATING, 
+            COUNT(*) AS RatingCounts
          FROM ratings_db
          GROUP BY movie_id
    )
-   SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS year, runtime, RatingCounts
-   FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
+   SELECT meta_db.movie_id, 
+      TITLE, 
+      YEAR(release_date) AS year, 
+      runtime, 
+      RatingCounts
+   FROM meta_db 
+      JOIN rating rd on meta_db.movie_id = rd.movie_id
    WHERE rd.RatingCounts > 50
    ORDER BY RatingCounts DESC
   ${limit_clause};
@@ -440,10 +453,11 @@ async function random_genre(req, res) {
    let max_year = req.query.max_year ? req.query.max_year : 2020;
    let sql = `
       SELECT *
-      FROM meta_db JOIN genres_db gd on meta_db.movie_id = gd.movie_id
+      FROM meta_db 
+         JOIN genres_db gd on meta_db.movie_id = gd.movie_id
       WHERE gd.genre = '${genre}'
-      AND release_date >= ${min_year}
-      AND release_date <= ${max_year}
+         AND release_date >= ${min_year}
+         AND release_date <= ${max_year}
       ORDER BY RAND()
       ${limit_clause}
       ${offset_clause}
@@ -632,7 +646,8 @@ async function connections(req, res) {
 /* 
 Purpose: displays movies that respect the filters 
 Type: GET
-Arguments: 
+Arguments: page_size, offset, movie_id, title, country, director, year
+   tag, genre, cast
 Return: list of {movie_ids} 
 */
 async function search(req, res) {
@@ -656,9 +671,15 @@ async function search(req, res) {
       where_clause = `${where_clause} AND m.release_date LIKE '%${year}%' `;
    const actor = req.query.actor;
    const genre = req.query.genre;
-   let with_clause = "";
-   if (actor && !genre) {
-      with_clause = `WITH 
+   const tag = req.query.tag;
+   let with_clause = `WITH 
+   all_movies AS (
+      select movie_id 
+      from meta_db
+   )
+   `;
+   if (actor) {
+      with_clause = `${with_clause},  
       movies_with_actor AS (
          select movie_id 
          from cast_db 
@@ -668,8 +689,8 @@ async function search(req, res) {
          where_clause +
          ` AND movie_id IN (select movie_id from movies_with_actor) `;
    }
-   if (!actor && genre) {
-      with_clause = `WITH 
+   if (genre) {
+      with_clause = `${with_clause},
       movies_with_genre AS (
          select movie_id 
          from genres_db 
@@ -679,21 +700,16 @@ async function search(req, res) {
          where_clause +
          ` AND movie_id IN (select movie_id from movies_with_genre) `;
    }
-   if (actor && genre) {
-      with_clause = `WITH 
-      movies_with_actor AS (
+   if (tag) {
+      with_clause = `${with_clause}, 
+      movies_with_tag AS (
          select movie_id 
-         from cast_db 
-         where cast_name like '%${actor}%'), 
-      movies_with_genre AS (
-         select movie_id 
-         from genres_db 
-         where genre like '%${genre}%'
+         from tags_db 
+         where tag like '%${tag}%'
       ) `;
       where_clause =
          where_clause +
-         ` AND movie_id IN (select movie_id from movies_with_actor) ` +
-         ` AND movie_id IN (select movie_id from movies_with_genre) `;
+         ` AND movie_id IN (select movie_id from movies_with_tag) `;
    }
    let sql = `
       ${with_clause}
@@ -703,6 +719,7 @@ async function search(req, res) {
       ${limit_clause}
       ${offset_clause}
       ;`;
+   console.log(sql);
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -763,9 +780,9 @@ async function search_movies(req, res) {
 async function rating_filter(req, res) {
    var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
    from meta_db
-   join cast_db on meta_db.movie_id = cast_db.movie_id
-   join genres_db on meta_db.movie_id = genres_db.movie_id
-   join ratings_db on meta_db.movie_id = ratings_db.movie_id
+      join cast_db on meta_db.movie_id = cast_db.movie_id
+      join genres_db on meta_db.movie_id = genres_db.movie_id
+      join ratings_db on meta_db.movie_id = ratings_db.movie_id
    where`;
    var ratinglowCond = req.query.ratinglow
       ? " AND ratings_db.rating >= " + req.query.ratinglow
