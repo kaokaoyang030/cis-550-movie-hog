@@ -789,12 +789,16 @@ async function get_imdb(req, res) {
    });
 }
 
-// Getting the corresponding movie cast by IMDB ID
-async function get_casts_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.imdbid : "tt0094675";
-   var sql = `SELECT cast_name FROM cast_db
-   JOIN meta_db on cast_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`;
+// Getting the corresponding movie cast
+async function get_cast(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT cast_name 
+      FROM cast_db
+      JOIN meta_db 
+         on cast_db.movie_id = meta_db.movie_id
+      WHERE meta_db.imdb_id = "${movie_id}"
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -806,11 +810,14 @@ async function get_casts_by_ID(req, res) {
 }
 
 // Getting the corresponding genre by IMDB ID
-async function get_genres_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
-   var sql = `SELECT genre FROM genres_db
-   JOIN meta_db on genres_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`;
+async function get_genres(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT genre FROM genres_db
+      JOIN meta_db 
+         on genres_db.movie_id = meta_db.movie_id
+      WHERE meta_db.imdb_id = "${movie_id}"
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -822,11 +829,15 @@ async function get_genres_by_ID(req, res) {
 }
 
 // Get the average ratings by ID
-async function get_avg_ratings_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
-   var sql = `SELECT AVG(rating) FROM ratings_db
-   JOIN meta_db on ratings_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`;
+async function get_avg_rating(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT AVG(rating) 
+      FROM ratings_db
+      JOIN meta_db 
+         on ratings_db.movie_id = meta_db.movie_id
+      WHERE meta_db.imdb_id = "${movie_id}"
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -838,10 +849,13 @@ async function get_avg_ratings_by_ID(req, res) {
 }
 
 // get other movie info to show except casts, genres, avg_ratings
-async function get_movie_info_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.genre : "tt0113101";
-   var sql = `SELECT meta_db.title as name, meta_db.director as director, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid FROM meta_db
-   WHERE meta_db.imdb_id = "${ID}";`;
+async function get_meta(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT meta_db.title as name, meta_db.director as director, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid 
+      FROM meta_db
+      WHERE meta_db.imdb_id = "${movie_id}"
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -871,8 +885,9 @@ module.exports = {
    actors,
    search,
    search_movies,
-   get_casts_by_ID,
-   get_genres_by_ID,
-   get_avg_ratings_by_ID,
-   get_movie_info_by_ID,
+   get_imdb,
+   get_cast,
+   get_genres,
+   get_avg_rating,
+   get_meta,
 };

@@ -59,13 +59,15 @@ app.get("/search", routes.search);
 
 app.get("/search_movies", routes.search_movies);
 
-app.get("/get_casts_by_ID", routes.get_casts_by_ID);
+app.get("/get_imdb", routes.get_imdb);
 
-app.get("/get_genres_by_ID", routes.get_genres_by_ID);
+app.get("/get_cast", routes.get_cast);
 
-app.get("/get_avg_ratings_by_ID", routes.get_avg_ratings_by_ID);
+app.get("/get_genre", routes.get_genres);
 
-app.get("/get_movie_info_by_ID", routes.get_movie_info_by_ID);
+app.get("/get_avg_rating", routes.get_avg_rating);
+
+app.get("/get_meta", routes.get_meta);
 
 app.listen(config.server_port, () => {
    console.log(
