@@ -1,4 +1,4 @@
-var mysql = require("mysql");
+const mysql = require("mysql");
 const config = require("./config.json");
 
 // connection details
@@ -606,7 +606,6 @@ async function connections(req, res) {
       FROM actors_network3
       LIMIT ${max}; 
       `;
-   console.log("sfha");
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -691,7 +690,6 @@ async function search(req, res) {
       ${limit_clause}
       ${offset_clause}
       ;`;
-   console.log(sql);
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -770,6 +768,23 @@ async function rating_filter(req, res) {
          res.json({ error: error });
       } else if (results) {
          res.json({ results: results });
+      }
+   });
+}
+
+async function get_imdb(req, res) {
+   const movie_id = req.query.movie_id;
+   let sql = `
+     select imdb_id
+     from meta_db
+     where movie_id = '${movie_id}'
+     ;`;
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+         console.log(error.errno);
+         res.json({ error: error });
+      } else {
+         res.json({ results });
       }
    });
 }
