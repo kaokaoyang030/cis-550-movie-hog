@@ -59,6 +59,8 @@ app.get("/search", routes.search);
 
 app.get("/search_movies", routes.search_movies);
 
+app.get("/rating_filter", routes.rating_filter);
+
 app.get("/get_imdb", routes.get_imdb);
 
 app.get("/get_tags", routes.get_tags);

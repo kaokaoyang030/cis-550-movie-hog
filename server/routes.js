@@ -730,12 +730,7 @@ async function search(req, res) {
    });
 }
 
-// film searching and showing part
-// Target: search can be filtered by name, genres, actors, director, country, rel yr, rating
-// return: imdb id
-// Can use imdb id to get full list to show: name, director, actor, genres, homepage link (prob handled by frontend), country, org lang, rel date, runtime, imdb id, rating - to show on the display page
-
-// Need more polish so I hide it now
+// Please use search function above to develop frontend, This is abandoned. 
 async function search_movies(req, res) {
    var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
    from meta_db
@@ -776,21 +771,34 @@ async function search_movies(req, res) {
    });
 }
 
-// this currently only returns the imdb id of the movie. Will polish later
+/* 
+Purpose: filter movies with their lower ang higher bound ratings
+Type: GET
+Arguments: page_size, offset, ratelow, ratehigh
+Return: list of {movie_id, rating} 
+*/
 async function rating_filter(req, res) {
-   var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
-   from meta_db
-      join cast_db on meta_db.movie_id = cast_db.movie_id
-      join genres_db on meta_db.movie_id = genres_db.movie_id
-      join ratings_db on meta_db.movie_id = ratings_db.movie_id
-   where`;
-   var ratinglowCond = req.query.ratinglow
-      ? " AND ratings_db.rating >= " + req.query.ratinglow
-      : "";
-   var ratinghighCond = req.query.ratinghigh
-      ? " AND ratings_db.rating <= " + req.query.ratinghigh
-      : "";
-   var endquery = " ORDER BY meta_db.title; ";
+   const page_size = req.query.page_size;
+   const offset = req.query.offset;
+   let limit_clause = page_size ? `LIMIT ${page_size}` : "";
+   let offset_clause = offset ? `OFFSET ${offset}` : "";
+   var searchQuery = `WITH movie_rating AS (
+      SELECT ROUND(AVG(rating),1) as rate, movie_id
+      FROM ratings_db
+      GROUP BY movie_id
+   )
+   SELECT movie_rating.movie_id, movie_rating.rate from movie_rating
+      JOIN meta_db on meta_db.movie_id = movie_rating.movie_id
+   `;
+   var ratinglowCond = req.query.ratelow
+      ? " WHERE movie_rating.rate >= " + req.query.ratelow
+      : " WHERE movie_rating.rate >= 0";
+   var ratinghighCond = req.query.ratehigh
+      ? " AND movie_rating.rate <= " + req.query.ratehigh
+      : " AND movie_rating.rate <= 5";
+   var endquery = ` ORDER BY movie_rating.rate       
+                  ${limit_clause}
+                  ${offset_clause};`;
    var query = searchQuery + ratinglowCond + ratinghighCond + endquery;
    connection.query(query, function (error, results, fields) {
       if (error) {
@@ -882,7 +890,7 @@ async function get_genres(req, res) {
 async function get_avg_rating(req, res) {
    var movie_id = req.query.movie_id ? req.query.movie_id : 13;
    var sql = `
-      SELECT AVG(rating) 
+      SELECT ROUND(AVG(rating),1) 
       FROM ratings_db
       JOIN meta_db 
          on ratings_db.movie_id = meta_db.movie_id
@@ -909,7 +917,8 @@ async function get_meta(req, res) {
          meta_db.release_date as rel_date, 
          meta_db.runtime as runtime, 
          meta_db.country as country, 
-         meta_db.imdb_id as imdbid 
+         meta_db.imdb_id as imdbid,
+         meta_db.poster_path as poster_path
       FROM meta_db
       WHERE meta_db.movie_id = ${movie_id}
       ;`;
@@ -942,6 +951,7 @@ module.exports = {
    actors,
    search,
    search_movies,
+   rating_filter,
    get_imdb,
    get_tags,
    get_cast,
