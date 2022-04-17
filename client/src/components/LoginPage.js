@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Button, Input, Space, message } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import { login, sign_up } from '../fetcher'
 
 class LoginPage extends React.Component {
     formRef = React.createRef();
@@ -13,8 +14,8 @@ class LoginPage extends React.Component {
       
     }
 
-    onFinish = () => {
-        console.log("finish form");
+    onFinish = (values) => {
+        console.log("finish form", values);
     };
 
     handleLogin = async () => {
@@ -31,7 +32,22 @@ class LoginPage extends React.Component {
         });
 
         try {
-          this.props.handleLogInSuccess()
+          console.log('111111', formInstance.getFieldsValue(true))
+          const {username, password} = formInstance.getFieldsValue(true)
+          const input = {
+            username : username,
+            password : password
+          }
+          const result = await login(input)
+          console.log(result)
+          if (result && result.username !== null){
+            message.success(`Welcome, ${result.username}`)
+            window.localStorage.setItem('username', result.username)
+            this.props.handleLogInSuccess()
+          } else {
+            message.error('Wrong username or password')
+          }
+          
         } catch (error) {
           message.error(`fail to login due to ${error.message}`)
         }
@@ -50,12 +66,26 @@ class LoginPage extends React.Component {
           return;
         }
      
-        this.setState({
-          loading: true,
-        });
+        try {
+          console.log('111111', formInstance.getFieldsValue(true))
+          const {username, password} = formInstance.getFieldsValue(true)
+          const input = {
+            username : username,
+            password : password
+          }
+          const result = await sign_up(input)
+          console.log(result)
+          if (result && result.username !== null){
+            message.success(`Welcome, ${result.username}`)
+            window.localStorage.setItem('username', result.username)
+            this.props.handleLogInSuccess()
+          }
+        } catch (error) {
+          message.error(`fail to login due to ${error.message}`)
+        }
 
         this.setState({
-            loading : false
+            loading: false
         })
     }
 
