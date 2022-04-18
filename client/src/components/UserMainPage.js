@@ -3,18 +3,19 @@ import { Tabs} from 'antd'
 import SearchMovie from './SearchMovie';
 import TopTenRating from './TopTenRating';
 import TopTenReview from './TopTenReview';
+import MyMoviePage from './MyMoviePage';
 
 const { TabPane } = Tabs;
 
 class UserMainPage extends React.Component {
     render () {
         return (
-            <Tabs defaultActiveKey="1" destroyInactiveTabPane={true}>
+            <Tabs defaultActiveKey="1" destroyInactiveTabPane={false}>
                 <TabPane tab="Search Movie" key="1">
                     <SearchMovie/>
                 </TabPane>
                 <TabPane tab="My Movie" key="2">
-                    <div>My Movie Main Page</div>
+                    <MyMoviePage />
                 </TabPane>
                 <TabPane tab="Top 10 Rating Movie" key="3">
                     <TopTenRating />

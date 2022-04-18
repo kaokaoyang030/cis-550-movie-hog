@@ -1,11 +1,8 @@
-var mysql = require("mysql");
+const { min } = require("date-fns");
+const mysql = require("mysql");
 const config = require("./config.json");
 
-<<<<<<< HEAD
-//  connection details
-=======
 // connection details
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 const connection = mysql.createConnection({
    host: config.rds_host,
    user: config.rds_user,
@@ -19,10 +16,7 @@ connection.connect(function (err) {
    console.log("Connected!");
 });
 
-<<<<<<< HEAD
-=======
 /* dummy route */
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 async function hello(req, res) {
    // a GET request to /hello?name=Steve
    if (req.query.name) {
@@ -32,16 +26,12 @@ async function hello(req, res) {
    }
 }
 
-<<<<<<< HEAD
-//return cred + obj boolean
-=======
 /*
 Purpose: allows users to sign up and create credentials to sign in 
 Type: POST
 Arguments: body.username, body.password 
 Return: {username} if successful, otherwise null
 */
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 async function sign_up(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -64,21 +54,17 @@ async function sign_up(req, res) {
             res.json({ error: error });
          }
       } else {
-         res.json({ username: null });
+         res.json({ username: username });
       }
    });
 }
 
-<<<<<<< HEAD
-//return cred + obj boolean
-=======
 /*
 Purpose: checks credentials provided by user to sign in against database to allow access 
 Type: POST
 Arguments: body.username, body.password 
 Return: {username} if successful, otherwise {null}
 */
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 async function sign_in(req, res) {
    const username = req.body.username;
    const password = req.body.password;
@@ -102,11 +88,7 @@ async function sign_in(req, res) {
             req.session.username = username;
             req.session.loggedin = true;
             console.log(`Logged in as ${username}!`);
-<<<<<<< HEAD
-            res.json({ cred: creds });
-=======
             res.json({ username: username });
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
          } else {
             console.log(`Wrong logging details!`);
             res.json({ username: null });
@@ -122,15 +104,11 @@ Arguments: (optional) query.username
 Return: list of {username, movie_id} liked by username
 */
 async function favorites(req, res) {
-<<<<<<< HEAD
-   const username = req.body.username;
-=======
    const page_size = req.query.page_size;
    const offset = req.query.offset;
    let limit_clause = page_size ? `LIMIT ${page_size}` : "";
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    const username = req.query.username;
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
    let where_clause = "";
    if (username) {
       where_clause = `where username = '${username}'`;
@@ -159,18 +137,20 @@ Arguments: body.username, body.movie_id
 Return: {username, movie_id} if succesful, otherwise {null, null}
 */
 async function like(req, res) {
+   console.log('`1111111', req.body)
    const username = req.body.username;
    const movie_id = parseInt(req.body.movie_id);
    let sql = `
     insert into Favorites
     Value ('${username}', '${movie_id}', 'NULL')
     `;
+   console.log('details: ', username, movie_id)
    connection.query(sql, function (error, results, fields) {
       if (error) {
          if (error.errno == 1062) {
             //duplicate username
             console.log(`Movie already liked!`);
-            res.json({ username: null, movie_id: null });
+            res.json({ username: null, movie_id: null, reason: `Movie already liked!`});
          } else if (error.errno == 1452) {
             //not found
             console.log("Movie id or username doesnt exist!");
@@ -339,23 +319,35 @@ Arguments: none
 Return: list of {actor} 
 */
 async function versatile(req, res) {
+   const max_year = req.query.max_year ? req.query.max_year : 2022;
+   const min_year = req.query.min_year ? req.query.min_year : 1900;
+   const min_revs = req.query.min_revs ? req.query.min_revs : 100000;
    const page_size = req.query.page_size;
    const offset = req.query.offset;
    let limit_clause = page_size ? `LIMIT ${page_size}` : "";
    let offset_clause = offset ? `OFFSET ${offset}` : "";
+   let where_clause = `      
+      where cast_db.movie_id in (
+         select movie_id 
+         from meta_db 
+         where release_date >= '${min_year}'
+            and release_date <= '${max_year}'
+            and revs >= '${min_revs}'
+      )`;
    let sql = `
       select cast_name, count(distinct genre) as genres
       from genres_db 
-            join cast_db cd 
-            on genres_db.movie_id = cd.movie_id
-      where cd.movie_id in (
-         select movie_id from meta_db 
-         )
+            join cast_db
+            on genres_db.movie_id = cast_db.movie_id
+            join meta_db 
+            on genres_db.movie_id = meta_db.movie_id
+      ${where_clause}
       group by cast_name
-      order by count DESC
+      order by genres DESC
       ${limit_clause}
       ${offset_clause}
       ;`;
+   console.log(sql);
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -379,12 +371,18 @@ async function top_rating(req, res) {
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    let sql = `
       WITH rating AS(
-            SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
+            SELECT movie_id, 
+               ROUND(AVG(rating),1) as RATING, 
+               COUNT(*) AS RatingCounts
             FROM ratings_db
             GROUP BY movie_id
       )
-      SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS YEAR, runtime,rd.rating
-      FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
+      SELECT meta_db.movie_id, 
+         TITLE, 
+         YEAR(release_date) AS YEAR, 
+         runtime,rd.rating
+      FROM meta_db 
+         JOIN rating rd on meta_db.movie_id = rd.movie_id
       WHERE rd.RatingCounts > 50
       ORDER BY rd.rating DESC
       ${limit_clause}
@@ -412,32 +410,24 @@ async function top_review(req, res) {
    let limit_clause = page_size ? `LIMIT ${page_size}` : "";
    let offset_clause = offset ? `OFFSET ${offset}` : "";
    let sql = `
-<<<<<<< HEAD
    WITH rating AS(
-      SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
-      FROM ratings_db
-      GROUP BY movie_id
-  )
-  SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS year, runtime, RatingCounts
-  FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
-  WHERE rd.RatingCounts > 50
-  ORDER BY RatingCounts DESC
+         SELECT movie_id, 
+            ROUND(AVG(rating),1) as RATING, 
+            COUNT(*) AS RatingCounts
+         FROM ratings_db
+         GROUP BY movie_id
+   )
+   SELECT meta_db.movie_id, 
+      TITLE, 
+      YEAR(release_date) AS year, 
+      runtime, 
+      RatingCounts
+   FROM meta_db 
+      JOIN rating rd on meta_db.movie_id = rd.movie_id
+   WHERE rd.RatingCounts > 50
+   ORDER BY RatingCounts DESC
   ${limit_clause};
    `;
-=======
-      WITH rating AS(
-            SELECT movie_id, ROUND(AVG(rating),1) as RATING, COUNT(*) AS RatingCounts
-            FROM ratings_db
-            GROUP BY movie_id
-      )
-      SELECT meta_db.movie_id, TITLE, YEAR(release_date) AS year, runtime, RatingCounts
-      FROM meta_db JOIN rating rd on meta_db.movie_id = rd.movie_id
-      WHERE rd.RatingCounts > 50
-      ORDER BY RatingCounts DESC
-      ${limit_clause}
-      ${offset_clause};
-      `;
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -464,10 +454,11 @@ async function random_genre(req, res) {
    let max_year = req.query.max_year ? req.query.max_year : 2020;
    let sql = `
       SELECT *
-      FROM meta_db JOIN genres_db gd on meta_db.movie_id = gd.movie_id
+      FROM meta_db 
+         JOIN genres_db gd on meta_db.movie_id = gd.movie_id
       WHERE gd.genre = '${genre}'
-      AND release_date >= ${min_year}
-      AND release_date <= ${max_year}
+         AND release_date >= ${min_year}
+         AND release_date <= ${max_year}
       ORDER BY RAND()
       ${limit_clause}
       ${offset_clause}
@@ -643,7 +634,6 @@ async function connections(req, res) {
       FROM actors_network3
       LIMIT ${max}; 
       `;
-   console.log("sfha");
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error.errno);
@@ -657,7 +647,8 @@ async function connections(req, res) {
 /* 
 Purpose: displays movies that respect the filters 
 Type: GET
-Arguments: 
+Arguments: page_size, offset, movie_id, title, country, director, year
+   tag, genre, cast
 Return: list of {movie_ids} 
 */
 async function search(req, res) {
@@ -672,18 +663,24 @@ async function search(req, res) {
    const year = req.query.year;
    let where_clause = "WHERE 1=1 "; //dummy
    if (movie_id) where_clause = `${where_clause} AND m.movie_id = ${movie_id} `;
-   if (title) where_clause = `${where_clause} AND m.title LIKE '%${title}%' `;
+   if (title) where_clause = `${where_clause} AND meta_db.title LIKE '%${title}%' `;
    if (director)
-      where_clause = `${where_clause} AND m.Director LIKE '%${director}%' `;
+      where_clause = `${where_clause} AND meta_db.Director LIKE '%${director}%' `;
    if (country)
-      where_clause = `${where_clause} AND m.Country LIKE '%${country}%' `;
+      where_clause = `${where_clause} AND meta_db.Country LIKE '%${country}%' `;
    if (year)
-      where_clause = `${where_clause} AND m.release_date LIKE '%${year}%' `;
+      where_clause = `${where_clause} AND meta_db.release_date LIKE '%${year}%' `;
    const actor = req.query.actor;
    const genre = req.query.genre;
-   let with_clause = "";
-   if (actor && !genre) {
-      with_clause = `WITH 
+   const tag = req.query.tag;
+   let with_clause = `WITH 
+   all_movies AS (
+      select movie_id 
+      from meta_db
+   )
+   `;
+   if (actor) {
+      with_clause = `${with_clause},  
       movies_with_actor AS (
          select movie_id 
          from cast_db 
@@ -693,8 +690,8 @@ async function search(req, res) {
          where_clause +
          ` AND movie_id IN (select movie_id from movies_with_actor) `;
    }
-   if (!actor && genre) {
-      with_clause = `WITH 
+   if (genre) {
+      with_clause = `${with_clause},
       movies_with_genre AS (
          select movie_id 
          from genres_db 
@@ -704,26 +701,21 @@ async function search(req, res) {
          where_clause +
          ` AND movie_id IN (select movie_id from movies_with_genre) `;
    }
-   if (actor && genre) {
-      with_clause = `WITH 
-      movies_with_actor AS (
+   if (tag) {
+      with_clause = `${with_clause}, 
+      movies_with_tag AS (
          select movie_id 
-         from cast_db 
-         where cast_name like '%${actor}%'), 
-      movies_with_genre AS (
-         select movie_id 
-         from genres_db 
-         where genre like '%${genre}%'
+         from tags_db 
+         where tag like '%${tag}%'
       ) `;
       where_clause =
          where_clause +
-         ` AND movie_id IN (select movie_id from movies_with_actor) ` +
-         ` AND movie_id IN (select movie_id from movies_with_genre) `;
+         ` AND movie_id IN (select movie_id from movies_with_tag) `;
    }
    let sql = `
       ${with_clause}
-      select movie_id
-      from meta_db m
+      select movie_id, meta_db.title as name, meta_db.director as director, meta_db.country as country, meta_db.lang as org_language, Year(meta_db.release_date) as rel_date, CONCAT(meta_db.runtime,' mins') as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
+      from meta_db
       ${where_clause}
       ${limit_clause}
       ${offset_clause}
@@ -739,12 +731,7 @@ async function search(req, res) {
    });
 }
 
-// film searching and showing part
-// Target: search can be filtered by name, genres, actors, director, country, rel yr, rating
-// return: imdb id
-// Can use imdb id to get full list to show: name, director, actor, genres, homepage link (prob handled by frontend), country, org lang, rel date, runtime, imdb id, rating - to show on the display page
-
-// Need more polish so I hide it now
+// Please use search function above to develop frontend, This is abandoned. 
 async function search_movies(req, res) {
    var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
    from meta_db
@@ -785,21 +772,34 @@ async function search_movies(req, res) {
    });
 }
 
-// this currently only returns the imdb id of the movie. Will polish later
+/* 
+Purpose: filter movies with their lower ang higher bound ratings
+Type: GET
+Arguments: page_size, offset, ratelow, ratehigh
+Return: list of {movie_id, rating} 
+*/
 async function rating_filter(req, res) {
-   var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
-   from meta_db
-   join cast_db on meta_db.movie_id = cast_db.movie_id
-   join genres_db on meta_db.movie_id = genres_db.movie_id
-   join ratings_db on meta_db.movie_id = ratings_db.movie_id
-   where`;
-   var ratinglowCond = req.query.ratinglow
-      ? " AND ratings_db.rating >= " + req.query.ratinglow
-      : "";
-   var ratinghighCond = req.query.ratinghigh
-      ? " AND ratings_db.rating <= " + req.query.ratinghigh
-      : "";
-   var endquery = " ORDER BY meta_db.title; ";
+   const page_size = req.query.page_size;
+   const offset = req.query.offset;
+   let limit_clause = page_size ? `LIMIT ${page_size}` : "";
+   let offset_clause = offset ? `OFFSET ${offset}` : "";
+   var searchQuery = `WITH movie_rating AS (
+      SELECT ROUND(AVG(rating),1) as rate, movie_id
+      FROM ratings_db
+      GROUP BY movie_id
+   )
+   SELECT movie_rating.movie_id, movie_rating.rate from movie_rating
+      JOIN meta_db on meta_db.movie_id = movie_rating.movie_id
+   `;
+   var ratinglowCond = req.query.ratelow
+      ? " WHERE movie_rating.rate >= " + req.query.ratelow
+      : " WHERE movie_rating.rate >= 0";
+   var ratinghighCond = req.query.ratehigh
+      ? " AND movie_rating.rate <= " + req.query.ratehigh
+      : " AND movie_rating.rate <= 5";
+   var endquery = ` ORDER BY movie_rating.rate       
+                  ${limit_clause}
+                  ${offset_clause};`;
    var query = searchQuery + ratinglowCond + ratinghighCond + endquery;
    connection.query(query, function (error, results, fields) {
       if (error) {
@@ -810,17 +810,32 @@ async function rating_filter(req, res) {
       }
    });
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
+async function get_imdb(req, res) {
+   const movie_id = req.query.movie_id;
+   let sql = `
+     select imdb_id
+     from meta_db
+     where movie_id = ${movie_id}
+     ;`;
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+         console.log(error.errno);
+         res.json({ error: error });
+      } else {
+         res.json({ results });
+      }
+   });
+}
 
-// Getting the corresponding movie cast by IMDB ID
-async function get_casts_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.imdbid : "tt0094675";
-   var sql = `SELECT cast_name FROM cast_db
-   JOIN meta_db on cast_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`;
+// Getting all keywords associated with movie_id
+async function get_tags(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT tag 
+      FROM tags_db
+      WHERE movie_id = ${movie_id}
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -831,12 +846,16 @@ async function get_casts_by_ID(req, res) {
    });
 }
 
-// Getting the corresponding genre by IMDB ID
-async function get_genres_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
-   var sql = `SELECT genre FROM genres_db
-   JOIN meta_db on genres_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`;
+// Getting all cast members in the movie_id
+async function get_cast(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT cast_name 
+      FROM cast_db
+      JOIN meta_db 
+         on cast_db.movie_id = meta_db.movie_id
+      WHERE meta_db.movie_id = ${movie_id}
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -847,12 +866,37 @@ async function get_genres_by_ID(req, res) {
    });
 }
 
-// Get the average ratings by ID
-async function get_avg_ratings_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.genre : "tt0094675";
-   var sql = `SELECT AVG(rating) FROM ratings_db
-   JOIN meta_db on ratings_db.movie_id = meta_db.movie_id
-   WHERE meta_db.imdb_id = "${ID}";`;
+// Getting all genres the movie_id belongs to
+async function get_genres(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT genre 
+      FROM meta_db
+      JOIN genres_db
+         on genres_db.movie_id = meta_db.movie_id
+      WHERE meta_db.movie_id = ${movie_id}
+      ;`;
+   console.log(sql);
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+         console.log(error);
+         res.json({ error: error });
+      } else if (results) {
+         res.json({ results: results });
+      }
+   });
+}
+
+// Get the average ratings
+async function get_avg_rating(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT ROUND(AVG(rating),1) 
+      FROM ratings_db
+      JOIN meta_db 
+         on ratings_db.movie_id = meta_db.movie_id
+      WHERE meta_db.movie_id = ${movie_id}
+      ;`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -864,10 +908,36 @@ async function get_avg_ratings_by_ID(req, res) {
 }
 
 // get other movie info to show except casts, genres, avg_ratings
-async function get_movie_info_by_ID(req, res) {
-   var ID = req.query.imdbid; //? req.query.genre : "tt0113101";
+async function get_meta(req, res) {
+   var movie_id = req.query.movie_id ? req.query.movie_id : 13;
+   var sql = `
+      SELECT meta_db.title as name, 
+         meta_db.director as director, 
+         meta_db.country as country, 
+         meta_db.lang as org_language, 
+         meta_db.release_date as rel_date, 
+         meta_db.runtime as runtime, 
+         meta_db.country as country, 
+         meta_db.imdb_id as imdbid,
+         meta_db.poster_path as poster_path
+      FROM meta_db
+      WHERE meta_db.movie_id = ${movie_id}
+      ;`;
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+         console.log(error);
+         res.json({ error: error });
+      } else if (results) {
+         res.json({ results: results });
+      }
+   });
+}
+
+// get other movie info to show except casts, genres, avg_ratings
+async function get_movie_info_by_MovieID(req, res) {
+   var ID = req.query.movie_id; //? req.query.genre : "tt0113101";
    var sql = `SELECT meta_db.title as name, meta_db.director as director, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid FROM meta_db
-   WHERE meta_db.imdb_id = "${ID}";`;
+   WHERE meta_db.movie_id = "${ID}";`;
    connection.query(sql, function (error, results, fields) {
       if (error) {
          console.log(error);
@@ -895,13 +965,11 @@ module.exports = {
    co_actors,
    connections,
    actors,
-<<<<<<< HEAD
-=======
    search,
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
    search_movies,
    get_casts_by_ID,
    get_genres_by_ID,
    get_avg_ratings_by_ID,
    get_movie_info_by_ID,
+   get_movie_info_by_MovieID
 };

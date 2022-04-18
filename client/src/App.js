@@ -23,6 +23,7 @@ class App extends React.Component {
   }
 
   handleLogOut = () => {
+    window.localStorage.clear()
     this.setState({
       authed: false,
       isUser: false,

@@ -6,21 +6,15 @@ var bodyParser = require("body-parser");
 app.use(bodyParser.json());
 var session = require("express-session");
 app.use(session({ secret: "shh" }));
-const config = require('./config.json')
-<<<<<<< HEAD
-=======
+const config = require("./config.json");
 
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 //API Connection
-const API_KEY = 'api_key=fc9f519488c11a17e9c91f5d397bbd38';
-const BASE_URL = 'https://api.themoviedb.org/3';
-const API_URL = BASE_URL + '/discover/movie?sort_by=popularity.desc&'+API_KEY;
-const IMG_URL = 'https://image.tmdb.org/t/p/w500';
-const searchURL = BASE_URL + '/search/movie?'+API_KEY;
-<<<<<<< HEAD
-const MoviesDetails = BASE_URL + '/find/' + IMDB_ID+'?external_source=imdb_id&'+ API_KEY
-=======
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
+const API_KEY = "api_key=fc9f519488c11a17e9c91f5d397bbd38";
+const BASE_URL = "https://api.themoviedb.org/3";
+const API_URL = BASE_URL + "/discover/movie?sort_by=popularity.desc&" + API_KEY;
+const IMG_URL = "https://image.tmdb.org/t/p/w500";
+const searchURL = BASE_URL + "/search/movie?" + API_KEY;
+//const MoviesDetails = `${BASE_URL}/find/${IMDB_ID}?external_source=imdb_id&${API_KEY}`;
 
 // whitelist localhost 3000
 app.use(cors({ credentials: true, origin: ["http://localhost:3000"] }));
@@ -39,11 +33,9 @@ app.post("/like", routes.like);
 
 app.post("/unlike", routes.unlike);
 
-<<<<<<< HEAD
 app.get("/favorites", routes.favorites);
-=======
+
 app.get("/likes", routes.likes);
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
 
 app.get("/users", routes.users);
 
@@ -67,14 +59,24 @@ app.get("/search", routes.search);
 
 app.get("/search_movies", routes.search_movies);
 
-app.get("/get_casts_by_ID", routes.get_casts_by_ID);
+app.get("/rating_filter", routes.rating_filter);
 
-app.get("/get_genres_by_ID", routes.get_genres_by_ID);
+app.get("/get_imdb", routes.get_imdb);
 
-app.get("/get_avg_ratings_by_ID", routes.get_avg_ratings_by_ID);
+app.get("/get_tags", routes.get_tags);
 
-app.get("/get_movie_info_by_ID", routes.get_movie_info_by_ID);
+app.get("/get_cast", routes.get_cast);
+
+app.get("/get_genres", routes.get_genres);
+
+app.get("/get_avg_rating", routes.get_avg_rating);
+
+app.get("/get_meta", routes.get_meta);
+
+app.get("/get_movie_info_by_MovieID", routes.get_movie_info_by_MovieID);
 
 app.listen(config.server_port, () => {
-    console.log(`Server running at http://${config.server_host}:${config.server_port}/`);
+   console.log(
+      `Server running at http://${config.server_host}:${config.server_port}/`
+   );
 });

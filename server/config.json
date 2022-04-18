@@ -6,8 +6,4 @@
     "rds_db": "movies",
     "server_host": "127.0.0.1",
     "server_port":"8080"
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 0e4885487d43efa8d622bacb12c0167a40cce6ef
