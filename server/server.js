@@ -57,9 +57,11 @@ app.get("/connections", routes.connections);
 
 app.get("/search", routes.search);
 
-app.get("/search_movies", routes.search_movies);
+//app.get("/search_movies", routes.search_movies);
 
 app.get("/rating_filter", routes.rating_filter);
+
+app.get("/recommendation", routes.recommendation);
 
 app.get("/get_imdb", routes.get_imdb);
 

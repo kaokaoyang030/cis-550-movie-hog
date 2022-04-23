@@ -731,6 +731,7 @@ async function search(req, res) {
 }
 
 // Please use search function above to develop frontend, This is abandoned. 
+/*
 async function search_movies(req, res) {
    var searchQuery = `select meta_db.title as name, meta_db.director as director, cast_db.cast_name as actors, genres_db.genre as genre, meta_db.country as country, meta_db.lang as org_language, meta_db.release_date as rel_date, meta_db.runtime as runtime, meta_db.country as country, meta_db.imdb_id as imdbid
    from meta_db
@@ -770,6 +771,7 @@ async function search_movies(req, res) {
       }
    });
 }
+*/
 
 /* 
 Purpose: filter movies with their lower ang higher bound ratings
@@ -810,6 +812,49 @@ async function rating_filter(req, res) {
    });
 }
 
+/* 
+Purpose: give a recommendation based on the most popular genre in user's liked movie list
+Type: GET
+Arguments: page_size, offset, username
+Return: list of {movie_id}
+*/
+async function recommendation(req, res) {
+   let username = req.query.username ? req.query.username : "john";
+   const page_size = req.query.page_size;
+   const offset = req.query.offset;
+   let limit_clause = page_size ? `LIMIT ${page_size}` : "";
+   let offset_clause = offset ? `OFFSET ${offset}` : "";
+   let sql = `
+      WITH curr_fav_list AS (
+         SELECT meta_db.movie_id, meta_db.imdb_id, meta_db.title, 
+         meta_db.director, genres_db.genre from meta_db
+         JOIN Favorites f on meta_db.movie_id = f.movie_id
+         JOIN genres_db ON genres_db.movie_id = meta_db.movie_id
+         WHERE f.username = '${username}'
+      ), genre_count AS (
+         SELECT genre from curr_fav_list
+         GROUP BY genre
+         ORDER BY COUNT(movie_id) DESC
+         LIMIT 1
+      )
+      SELECT DISTINCT(movie_id) from genres_db
+      JOIN genre_count where genres_db.genre = genre_count.genre
+      ORDER BY RAND()
+      ${limit_clause}
+      ${offset_clause}
+      ;`;
+   connection.query(sql, function (error, results, fields) {
+      if (error) {
+         console.log(error.errno);
+         res.json({ error: error });
+      } else {
+         res.json({ results });
+      }
+   });
+}
+
+
+// get movie's imdb id
 async function get_imdb(req, res) {
    const movie_id = req.query.movie_id;
    let sql = `
@@ -950,8 +995,9 @@ module.exports = {
    connections,
    actors,
    search,
-   search_movies,
+   //search_movies,
    rating_filter,
+   recommendation,
    get_imdb,
    get_tags,
    get_cast,
